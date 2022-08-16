@@ -1,0 +1,38 @@
+[package]
+name = "finnkino-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.143", features = [ "derive" ] }
+quick-xml = { version = "0.23.0", features = [ "serialize" ] }
+actix = { version = "0.13.0" }
+actix-web = { version = "4.1.0" }
+awc = { version = "3.0.0", features = ["openssl"] }
+serde_json = { version = "1.0.83" }
+
+[dev-dependencies]
+rusty-hook = { version = "^0.11.2" }
+#rusty-hook = { version = "0.12.0", git = "https://github.com/swellaby/rusty-hook.git", branch = "master" }
+
+[package.metadata.commands]
+fmt-check = "cargo fmt --all -- --check"
+fmt-fix = "cargo fmt --all"
+lint-check = "cargo clippy --all-targets --all-features --frozen -- -D warnings"
+lint-fix = "cargo clippy --all-targets --all-features --frozen --fix -- -D warnings"
+
+[profile.dev]
+opt-level = 1
+overflow-checks = false
+debug = true
+debug-assertions = true
+lto = false
+strip = false
+
+[profile.release]
+opt-level = 3
+overflow-checks = true
+debug = false
+debug-assertions = false
+lto = true
+strip = true

@@ -1,0 +1,4 @@
+# See the list of lints at https://rust-lang.github.io/rust-clippy/master/index.html
+avoid-breaking-exported-api = false
+blacklisted-names = []
+cognitive-complexity-threshold = 30
