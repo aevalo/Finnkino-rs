@@ -8,8 +8,11 @@ serde = { version = "1.0.143", features = [ "derive" ] }
 quick-xml = { version = "0.23.0", features = [ "serialize" ] }
 actix = { version = "0.13.0" }
 actix-web = { version = "4.1.0" }
+actix-http = { version = "3.2.1" }
 awc = { version = "3.0.0", features = ["openssl"] }
 serde_json = { version = "1.0.83" }
+futures = { version = "0.3.23" }
+derive_builder = { version = "0.11.2" }
 
 [dev-dependencies]
 rusty-hook = { version = "^0.11.2" }
