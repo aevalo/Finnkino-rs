@@ -3,6 +3,13 @@ name = "finnkino-rs"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "finnkino-actix"
+path = "src/finnino-actix.rs"
+doctest = false
+bench = true
+doc = true
+
 [dependencies]
 serde = { version = "1.0.143", features = [ "derive" ] }
 quick-xml = { version = "0.23.0", features = [ "serialize" ] }
@@ -17,6 +24,10 @@ derive_builder = { version = "0.11.2" }
 [dev-dependencies]
 rusty-hook = { version = "^0.11.2" }
 #rusty-hook = { version = "0.12.0", git = "https://github.com/swellaby/rusty-hook.git", branch = "master" }
+wiremock = { version = "^0.5.14" }
+tokio = { version = "^1.20.1" }
+actix-rt = { version = "2.7.0" }
+url = { version = "2.2.2" }
 
 [package.metadata.commands]
 fmt-check = "cargo fmt --all -- --check"

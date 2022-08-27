@@ -5,6 +5,8 @@ use futures::{future, TryFutureExt};
 use quick_xml::de::from_str;
 use serde::{Deserialize, Serialize};
 
+use super::{Error, ErrorBuilder};
+
 #[derive(Deserialize, Debug)]
 pub struct TheatreAreas {
   #[serde(rename(deserialize = "TheatreArea"))]
@@ -17,23 +19,6 @@ pub struct TheatreArea {
   pub id: String,
   #[serde(rename(deserialize = "Name"))]
   pub name: String,
-}
-
-#[derive(Builder, Clone, Debug, Serialize)]
-#[builder(setter(into))]
-pub struct Error {
-  #[builder(setter(strip_option), default)]
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub status: Option<String>,
-  #[builder(setter(strip_option), default)]
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub code: Option<String>,
-  #[builder(setter(strip_option), default)]
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub title: Option<String>,
-  #[builder(setter(strip_option), default)]
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub detail: Option<String>,
 }
 
 // Responder
@@ -164,4 +149,126 @@ async fn get_xml(url: &str) -> Result<String, Error> {
       }
     })
     .await
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use std::time::Duration;
+  use url::Url;
+  use wiremock::matchers::{method, path};
+  use wiremock::{Mock, MockServer, ResponseTemplate};
+
+  #[actix_rt::test]
+  async fn test_get_areas() {
+    // Start a background HTTP server on a random local port
+    let mock_server = MockServer::start().await;
+
+    // Arrange the behaviour of the MockServer adding a Mock:
+    // when it receives a GET request on '/hello' it will respond with a 200.
+    let body = r#"<?xml version="1.0"?>
+    <TheatreAreas xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <TheatreArea>
+        <ID>1029</ID>
+        <Name>Valitse alue/teatteri</Name>
+      </TheatreArea>
+    </TheatreAreas>"#;
+    Mock::given(method("GET"))
+      .and(path("/xml/TheatreAreas"))
+      .respond_with(ResponseTemplate::new(200).set_body_raw(body, "text/xml"))
+      // Mounting the mock on the mock server - it's now effective!
+      .mount(&mock_server)
+      .await;
+
+    let xml_result = get_xml(format!("{}/xml/TheatreAreas", &mock_server.uri()).as_str())
+      .await
+      .unwrap();
+
+    assert_eq!(xml_result, body);
+  }
+
+  #[actix_rt::test]
+  async fn test_get_areas_not_found() {
+    // Start a background HTTP server on a random local port
+    let mock_server = MockServer::start().await;
+
+    // Arrange the behaviour of the MockServer adding a Mock:
+    // when it receives a GET request on '/hello' it will respond with a 200.
+    Mock::given(method("GET"))
+      .and(path("/xml/TheatreAreas"))
+      .respond_with(ResponseTemplate::new(200))
+      // Mounting the mock on the mock server - it's now effective!
+      .mount(&mock_server)
+      .await;
+
+    let xml_result = get_xml(format!("{}/xml/TheatreArea", &mock_server.uri()).as_str())
+      .await
+      .unwrap_err();
+    let error = ErrorBuilder::default()
+      .status("404")
+      .title("Not Found")
+      .build()
+      .unwrap();
+    assert_eq!(xml_result, error);
+  }
+
+  #[actix_rt::test]
+  async fn test_get_areas_incorrect_scheme() {
+    // Start a background HTTP server on a random local port
+    let mock_server = MockServer::start().await;
+    let mock_url = Url::parse(&mock_server.uri()).unwrap();
+
+    // Arrange the behaviour of the MockServer adding a Mock:
+    // when it receives a GET request on '/hello' it will respond with a 200.
+    Mock::given(method("GET"))
+      .and(path("/xml/TheatreAreas"))
+      .respond_with(ResponseTemplate::new(200))
+      // Mounting the mock on the mock server - it's now effective!
+      .mount(&mock_server)
+      .await;
+
+    let xml_result = get_xml(
+      format!(
+        "htp://{}:{}/xml/TheatreArea",
+        mock_url.host().unwrap(),
+        mock_url.port().unwrap()
+      )
+      .as_str(),
+    )
+    .await
+    .unwrap_err();
+    let error = ErrorBuilder::default()
+      .title("Invalid URL")
+      .detail("UnknownScheme")
+      .build()
+      .unwrap();
+    assert_eq!(xml_result, error);
+  }
+
+  #[actix_rt::test]
+  async fn test_get_areas_timeout() {
+    // Start a background HTTP server on a random local port
+    let mock_server = MockServer::start().await;
+    // Default AWC timeout is 5 seconds
+    let delay = Duration::from_secs(6);
+
+    // Arrange the behaviour of the MockServer adding a Mock:
+    // when it receives a GET request on '/hello' it will respond with a 200.
+    Mock::given(method("GET"))
+      .and(path("/xml/TheatreAreas"))
+      .respond_with(ResponseTemplate::new(200).set_delay(delay))
+      // Mounting the mock on the mock server - it's now effective!
+      .mount(&mock_server)
+      .await;
+
+    let xml_result = get_xml(format!("{}/xml/TheatreAreas", &mock_server.uri()).as_str())
+      .await
+      .unwrap_err();
+    let error = ErrorBuilder::default()
+      .title("Response took too long")
+      .detail("Timeout")
+      .build()
+      .unwrap();
+    assert_eq!(xml_result, error);
+  }
 }

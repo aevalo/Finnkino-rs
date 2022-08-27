@@ -4,6 +4,8 @@ use std::convert::From;
 use std::option::Option;
 use std::vec::Vec;
 
+use crate::finnkino;
+
 #[derive(Clone, Debug, Serialize)]
 pub struct ErrorLink {
   pub about: String,
@@ -54,8 +56,8 @@ pub struct Errors {
   pub errors: Vec<Error>,
 }
 
-impl From<crate::finnkino::Error> for Errors {
-  fn from(finnkino_error: crate::finnkino::Error) -> Self {
+impl From<finnkino::Error> for Errors {
+  fn from(finnkino_error: finnkino::Error) -> Self {
     let mut error_builder = ErrorBuilder::default();
     if let Some(status) = &finnkino_error.status {
       error_builder.status(status);

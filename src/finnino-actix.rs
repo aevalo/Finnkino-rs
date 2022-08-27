@@ -1,18 +1,17 @@
 #[macro_use]
 extern crate derive_builder;
-
 use actix_web::{get, http::header::ContentType, App, HttpResponse, HttpServer, Responder};
 
 mod finnkino;
 mod jsonapi;
-use finnkino::get_areas;
+use finnkino::actix::get_areas;
 
 #[get("/")]
 async fn index() -> impl Responder {
   HttpResponse::Ok().body("Hello world!")
 }
 
-#[get("/areas")]
+#[get("/api/areas")]
 async fn areas() -> impl Responder {
   match get_areas().await {
     Err(error) => {
