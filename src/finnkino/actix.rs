@@ -13,7 +13,7 @@ pub struct TheatreAreas {
   pub theatre_areas: std::vec::Vec<TheatreArea>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct TheatreArea {
   #[serde(rename(deserialize = "ID"))]
   pub id: String,
@@ -55,6 +55,7 @@ pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
 async fn get_xml(url: &str) -> Result<String, Error> {
   awc::Client::default()
     .get(url)
+    .insert_header(("Accept", "text/xml, application/xml"))
     .send()
     .map_err(|err| {
       let mut error_builder = ErrorBuilder::default();
@@ -100,9 +101,16 @@ async fn get_xml(url: &str) -> Result<String, Error> {
           .map_err(|err| {
             let mut error_builder = ErrorBuilder::default();
             match err {
-              PayloadError::Incomplete(incomplete_error) => error_builder
-                .title("Incomplete")
-                .detail(format!("{:?}", incomplete_error)),
+              PayloadError::Incomplete(incomplete_error) => {
+                if let Some(incomplete) = incomplete_error {
+                  error_builder
+                    .title("Incomplete")
+                    .code(format!("{:?}", incomplete.kind()))
+                    .detail(incomplete.to_string())
+                } else {
+                  error_builder.title("Incomplete")
+                }
+              }
               PayloadError::EncodingCorrupted => error_builder
                 .title("Encoding corrupted")
                 .detail(format!("{:?}", err)),
@@ -125,8 +133,8 @@ async fn get_xml(url: &str) -> Result<String, Error> {
           .and_then(|content| match String::from_utf8(content.to_vec()) {
             Err(err) => {
               let error_builder = ErrorBuilder::default()
-                .title("Failed to read XML")
-                .detail(format!("{:?}", err))
+                .title("Failed to parse XML")
+                .detail(err.to_string())
                 .build();
               future::err(error_builder.unwrap())
             }
@@ -154,13 +162,14 @@ async fn get_xml(url: &str) -> Result<String, Error> {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use pretty_assertions::assert_eq;
   use std::time::Duration;
   use url::Url;
   use wiremock::matchers::{method, path};
   use wiremock::{Mock, MockServer, ResponseTemplate};
 
   #[actix_rt::test]
-  async fn test_get_areas() {
+  async fn test_get_xml() {
     // Start a background HTTP server on a random local port
     let mock_server = MockServer::start().await;
 
@@ -188,7 +197,7 @@ mod tests {
   }
 
   #[actix_rt::test]
-  async fn test_get_areas_not_found() {
+  async fn test_get_xml_not_found() {
     // Start a background HTTP server on a random local port
     let mock_server = MockServer::start().await;
 
@@ -209,11 +218,12 @@ mod tests {
       .title("Not Found")
       .build()
       .unwrap();
+
     assert_eq!(xml_result, error);
   }
 
   #[actix_rt::test]
-  async fn test_get_areas_incorrect_scheme() {
+  async fn test_get_xml_incorrect_scheme() {
     // Start a background HTTP server on a random local port
     let mock_server = MockServer::start().await;
     let mock_url = Url::parse(&mock_server.uri()).unwrap();
@@ -242,11 +252,12 @@ mod tests {
       .detail("UnknownScheme")
       .build()
       .unwrap();
+
     assert_eq!(xml_result, error);
   }
 
   #[actix_rt::test]
-  async fn test_get_areas_timeout() {
+  async fn test_get_xml_timeout() {
     // Start a background HTTP server on a random local port
     let mock_server = MockServer::start().await;
     // Default AWC timeout is 5 seconds
@@ -269,6 +280,68 @@ mod tests {
       .detail("Timeout")
       .build()
       .unwrap();
+
+    assert_eq!(xml_result, error);
+  }
+
+  #[actix_rt::test]
+  async fn test_get_xml_bad_response_body() {
+    // Start a background HTTP server on a random local port
+    let mock_server = MockServer::start().await;
+
+    // Arrange the behaviour of the MockServer adding a Mock:
+    // when it receives a GET request on '/hello' it will respond with a 200.
+    let body = r#"<?xml version="1.0"?>
+    <TheatreAreas xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <TheatreArea>
+        <ID>1029</ID>
+        <Name>Valitse alue/teatteri</Name>
+      </TheatreArea>
+    </TheatreAreas>"#;
+    Mock::given(method("GET"))
+      .and(path("/xml/TheatreAreas"))
+      .respond_with(ResponseTemplate::new(200).insert_header("Content-Encoding", "gzip").set_body_raw(body, "text/xml"))
+      // Mounting the mock on the mock server - it's now effective!
+      .mount(&mock_server)
+      .await;
+
+    let xml_result = get_xml(format!("{}/xml/TheatreAreas", &mock_server.uri()).as_str())
+      .await
+      .unwrap_err();
+    let error = ErrorBuilder::default()
+      .title("Incomplete")
+      .code("InvalidInput")
+      .detail("invalid gzip header")
+      .build()
+      .unwrap();
+
+    assert_eq!(xml_result, error);
+  }
+
+  #[actix_rt::test]
+  async fn test_get_xml_malformed_xml() {
+    // Start a background HTTP server on a random local port
+    let mock_server = MockServer::start().await;
+
+    // Arrange the behaviour of the MockServer adding a Mock:
+    // when it receives a GET request on '/hello' it will respond with a 200.
+    let body = vec![34u8, 228, 166, 164, 110, 237, 166, 164, 44, 34];
+    Mock::given(method("GET"))
+      .and(path("/xml/TheatreAreas"))
+      .respond_with(ResponseTemplate::new(200).insert_header("Content-Type", "text/xml; charset=UTF-8").set_body_bytes(body))
+      // Mounting the mock on the mock server - it's now effective!
+      .mount(&mock_server)
+      .await;
+
+    let xml_result = get_xml(format!("{}/xml/TheatreAreas", &mock_server.uri()).as_str())
+      .await
+      .unwrap_err();
+    let error = ErrorBuilder::default()
+      .title("Failed to parse XML")
+      .detail("invalid utf-8 sequence of 1 bytes from index 5")
+      .build()
+      .unwrap();
+
     assert_eq!(xml_result, error);
   }
 }
