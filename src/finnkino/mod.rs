@@ -1,4 +1,18 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Debug)]
+pub struct TheatreAreas {
+  #[serde(rename(deserialize = "TheatreArea"))]
+  pub theatre_areas: std::vec::Vec<TheatreArea>,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub struct TheatreArea {
+  #[serde(rename(deserialize = "ID"))]
+  pub id: String,
+  #[serde(rename(deserialize = "Name"))]
+  pub name: String,
+}
 
 #[derive(Builder, Clone, Eq, Debug, PartialEq, Serialize)]
 #[builder(setter(into))]
@@ -18,3 +32,4 @@ pub struct Error {
 }
 
 pub mod actix;
+pub mod rocket;

@@ -3,23 +3,8 @@ use actix_web::{body::BoxBody, http::header::ContentType, HttpRequest, HttpRespo
 use awc::error::SendRequestError;
 use futures::{future, TryFutureExt};
 use quick_xml::de::from_str;
-use serde::{Deserialize, Serialize};
 
-use super::{Error, ErrorBuilder};
-
-#[derive(Deserialize, Debug)]
-pub struct TheatreAreas {
-  #[serde(rename(deserialize = "TheatreArea"))]
-  pub theatre_areas: std::vec::Vec<TheatreArea>,
-}
-
-#[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
-pub struct TheatreArea {
-  #[serde(rename(deserialize = "ID"))]
-  pub id: String,
-  #[serde(rename(deserialize = "Name"))]
-  pub name: String,
-}
+use super::{Error, ErrorBuilder, TheatreArea, TheatreAreas};
 
 // Responder
 impl Responder for TheatreArea {
@@ -35,6 +20,7 @@ impl Responder for TheatreArea {
   }
 }
 
+#[allow(dead_code)]
 pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
   let areas_xml = get_xml("https://www.finnkino.fi/xml/TheatreAreas").await;
   match areas_xml {
@@ -52,6 +38,7 @@ pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
   }
 }
 
+#[allow(dead_code)]
 async fn get_xml(url: &str) -> Result<String, Error> {
   awc::Client::default()
     .get(url)
@@ -138,7 +125,7 @@ async fn get_xml(url: &str) -> Result<String, Error> {
                 .build();
               future::err(error_builder.unwrap())
             }
-            Ok(content) => future::ok(content),
+            Ok(content_str) => future::ok(content_str),
           })
           .await
       } else {
