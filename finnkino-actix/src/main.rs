@@ -1,10 +1,7 @@
-#[macro_use]
-extern crate derive_builder;
 use actix_web::{get, http::header::ContentType, App, HttpResponse, HttpServer, Responder};
 
-mod finnkino;
-mod jsonapi;
-use finnkino::actix::get_areas;
+use libfinnkino_core::json::Errors as JsonErrors;
+use libfinnkino_actix::get_areas;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -15,7 +12,7 @@ async fn index() -> impl Responder {
 async fn areas() -> impl Responder {
   match get_areas().await {
     Err(error) => {
-      let errors = jsonapi::Errors::from(error);
+      let errors = JsonErrors::from(error);
       match serde_json::to_string(&errors) {
         Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
         Ok(json) => HttpResponse::Ok()

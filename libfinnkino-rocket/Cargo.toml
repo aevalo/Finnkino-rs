@@ -1,0 +1,30 @@
+[package]
+name = "libfinnkino-rocket"
+version = "0.1.0"
+edition = "2021"
+workspace = ".."
+
+[lib]
+crate-type = ["rlib"]
+doctest = false
+bench = false
+doc = false
+
+[dependencies]
+libfinnkino-core = { version = "0.1.0", path = "../libfinnkino-core" }
+quick-xml = { version = "0.23.0", features = [ "serialize" ] }
+# Rocket stuff
+rocket = { version = "^0.5.0-rc.2", features = ["json"] }
+rocket_http = { version = "^0.5.0-rc.2" }
+reqwest = { version = "0.11.11", features = ["json"] }
+
+[dev-dependencies]
+pretty_assertions = { version = "1.2.1" }
+url = { version = "2.2.2" }
+wiremock = { version = "^0.5.14" }
+
+[package.metadata.commands]
+fmt-check = "cargo fmt --all -- --check"
+fmt-fix = "cargo fmt --all"
+lint-check = "cargo clippy --all-targets --all-features --frozen -- -D warnings"
+lint-fix = "cargo clippy --all-targets --all-features --frozen --fix -- -D warnings"

@@ -1,0 +1,24 @@
+[package]
+name = "libfinnkino-core"
+version = "0.1.0"
+edition = "2021"
+workspace = ".."
+
+[lib]
+crate-type = ["rlib"]
+doctest = false
+bench = false
+doc = false
+
+[dependencies]
+derive_builder = { version = "0.11.2" }
+serde = { version = "1.0.143", features = [ "derive" ] }
+
+[dev-dependencies]
+pretty_assertions = { version = "1.2.1" }
+
+[package.metadata.commands]
+fmt-check = "cargo fmt --all -- --check"
+fmt-fix = "cargo fmt --all"
+lint-check = "cargo clippy --all-targets --all-features --frozen -- -D warnings"
+lint-fix = "cargo clippy --all-targets --all-features --frozen --fix -- -D warnings"

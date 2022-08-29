@@ -1,8 +1,8 @@
 [hooks]
 # the hook-as-array feature support was added in the unusable, unreleased v0.12.0
 #pre-commit = ["cargo check --workspace --all-targets", "cargo cmd fmt-check", "cargo lint-check"]
-pre-commit = "cargo check --workspace --all-targets && cargo cmd fmt-check"
-pre-push = "cargo test"
+#pre-commit = "cargo check --workspace --all-targets && cargo cmd fmt-check"
+#pre-push = "cargo test"
 
 [logging]
 verbose = true

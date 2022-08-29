@@ -1,0 +1,26 @@
+[package]
+name = "finnkino-rocket"
+version = "0.1.0"
+edition = "2021"
+workspace = ".."
+
+[[bin]]
+name = "finnkino-rocket"
+test = false
+doctest = false
+bench = false
+doc = false
+
+[dependencies]
+libfinnkino-core = { version = "0.1.0", path = "../libfinnkino-core" }
+libfinnkino-rocket = { version = "0.1.0", path = "../libfinnkino-rocket" }
+serde = { version = "1.0.143", features = [ "derive" ] }
+serde_json = { version = "1.0.83" }
+# Rocket stuff
+rocket = { version = "^0.5.0-rc.2", features = ["json"] }
+
+[package.metadata.commands]
+fmt-check = "cargo fmt --all -- --check"
+fmt-fix = "cargo fmt --all"
+lint-check = "cargo clippy --all-targets --all-features --frozen -- -D warnings"
+lint-fix = "cargo clippy --all-targets --all-features --frozen --fix -- -D warnings"

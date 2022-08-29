@@ -7,7 +7,7 @@ pub struct TheatreAreas {
   pub theatre_areas: Vec<TheatreArea>,
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[derive(Eq, Debug, Deserialize, PartialEq, Serialize)]
 pub struct TheatreArea {
   #[serde(rename(deserialize = "ID"))]
   pub id: String,
@@ -31,6 +31,3 @@ pub struct Error {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub detail: Option<String>,
 }
-
-pub mod actix;
-pub mod rocket;

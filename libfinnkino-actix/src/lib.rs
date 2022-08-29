@@ -1,26 +1,10 @@
 use actix_http::error::PayloadError;
-use actix_web::{body::BoxBody, http::header::ContentType, HttpRequest, HttpResponse, Responder};
 use awc::error::SendRequestError;
 use futures::{future, TryFutureExt};
 use quick_xml::de::from_str;
 
-use super::{Error, ErrorBuilder, TheatreArea, TheatreAreas};
+use libfinnkino_core::finnkino::{Error, ErrorBuilder, TheatreArea, TheatreAreas};
 
-// Responder
-impl Responder for TheatreArea {
-  type Body = BoxBody;
-
-  fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
-    match serde_json::to_string(&self) {
-      Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
-      Ok(json) => HttpResponse::Ok()
-        .content_type(ContentType::json())
-        .body(json),
-    }
-  }
-}
-
-#[allow(dead_code)]
 pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
   let areas_xml = get_xml("https://www.finnkino.fi/xml/TheatreAreas").await;
   match areas_xml {
@@ -38,7 +22,6 @@ pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
   }
 }
 
-#[allow(dead_code)]
 async fn get_xml(url: &str) -> Result<String, Error> {
   awc::Client::default()
     .get(url)
@@ -149,8 +132,8 @@ async fn get_xml(url: &str) -> Result<String, Error> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use pretty_assertions::assert_eq;
   use std::time::Duration;
+  use pretty_assertions::assert_eq;
   use url::Url;
   use wiremock::matchers::{method, path};
   use wiremock::{Mock, MockServer, ResponseTemplate};

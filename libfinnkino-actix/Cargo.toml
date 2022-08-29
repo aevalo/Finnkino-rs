@@ -1,0 +1,34 @@
+[package]
+name = "libfinnkino-actix"
+version = "0.1.0"
+edition = "2021"
+workspace = ".."
+
+[lib]
+crate-type = ["rlib"]
+doctest = false
+bench = false
+doc = false
+
+[dependencies]
+futures = { version = "0.3.23" }
+libfinnkino-core = { version = "0.1.0", path = "../libfinnkino-core" }
+serde = { version = "1.0.143", features = [ "derive" ] }
+serde_json = { version = "1.0.83" }
+quick-xml = { version = "0.23.0", features = [ "serialize" ] }
+# Actix stuff
+actix = { version = "0.13.0" }
+actix-http = { version = "3.2.1" }
+awc = { version = "3.0.0", features = ["openssl"] }
+
+[dev-dependencies]
+actix-rt = { version = "2.7.0" }
+pretty_assertions = { version = "1.2.1" }
+url = { version = "2.2.2" }
+wiremock = { version = "^0.5.14" }
+
+[package.metadata.commands]
+fmt-check = "cargo fmt --all -- --check"
+fmt-fix = "cargo fmt --all"
+lint-check = "cargo clippy --all-targets --all-features --frozen -- -D warnings"
+lint-fix = "cargo clippy --all-targets --all-features --frozen --fix -- -D warnings"

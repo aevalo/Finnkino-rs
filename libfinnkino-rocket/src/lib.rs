@@ -1,9 +1,8 @@
 use quick_xml::de::from_str;
 use std::time::Duration;
 
-use super::{Error, ErrorBuilder, TheatreArea, TheatreAreas};
+use libfinnkino_core::finnkino::{Error, ErrorBuilder, TheatreArea, TheatreAreas};
 
-#[allow(dead_code)]
 pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
   let areas_xml = get_xml("https://www.finnkino.fi/xml/TheatreAreas").await;
   match areas_xml {
@@ -21,7 +20,6 @@ pub async fn get_areas() -> Result<std::vec::Vec<TheatreArea>, Error> {
   }
 }
 
-#[allow(dead_code)]
 async fn get_xml(url: &str) -> Result<String, Error> {
   let response = reqwest::Client::new()
     .get(url)

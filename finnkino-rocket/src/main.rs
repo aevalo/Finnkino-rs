@@ -1,14 +1,11 @@
 #[macro_use]
 extern crate rocket;
-#[macro_use]
-extern crate derive_builder;
+extern crate libfinnkino_core;
 
 use rocket::http::{ContentType, Status};
 
-mod finnkino;
-mod jsonapi;
-
-use finnkino::rocket::get_areas;
+use libfinnkino_core::json::Errors as JsonErrors;
+use libfinnkino_rocket::get_areas;
 
 #[get("/")]
 fn index() -> &'static str {
@@ -19,7 +16,7 @@ fn index() -> &'static str {
 async fn areas() -> (Status, (ContentType, String)) {
   match get_areas().await {
     Err(error) => {
-      let errors = jsonapi::Errors::from(error);
+      let errors = JsonErrors::from(error);
       match serde_json::to_string(&errors) {
         Err(error) => (
           Status::InternalServerError,
