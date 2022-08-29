@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
+use std::vec::Vec;
 
 #[derive(Deserialize, Debug)]
 pub struct TheatreAreas {
   #[serde(rename(deserialize = "TheatreArea"))]
-  pub theatre_areas: std::vec::Vec<TheatreArea>,
+  pub theatre_areas: Vec<TheatreArea>,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
